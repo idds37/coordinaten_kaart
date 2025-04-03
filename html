@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Coördinaten selecteren via Google Maps</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+    #map {
+      height: 70%;
+      width: 100%;
+    }
+    #searchContainer {
+      padding: 10px 15px;
+      background: #f9f9f9;
+    }
+    #searchInput {
+      width: 100%;
+      max-width: 600px;
+      padding: 8px;
+      font-size: 14px;
+    }
+    #panel {
+      padding: 0 15px 15px 15px;
+      background: #f9f9f9;
+      border-top: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .coord-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .coord-row label {
+      min-width: 110px;
+    }
+    .coord-row input[type="text"] {
+      max-width: 300px;
+      width: 100%;
+      padding: 5px;
+    }
+    button {
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="searchContainer">
+  <input id="searchInput" type="text" placeholder="🔍 Zoek op adres of bedrijf..." />
+</div>
+
+<div id="panel">
+  <div class="coord-row">
+    <label for="lng">X (Longitude):</label>
+    <input type="text" id="lng" readonly />
+    <button onclick="copyToClipboard('lng')">📋 Kopieer X</button>
+  </div>
+  <div class="coord-row">
+    <label for="lat">Y (Latitude):</label>
+    <input type="text" id="lat" readonly />
+    <button onclick="copyToClipboard('lat')">📋 Kopieer Y</button>
+  </div>
+</div>
+
+<script>
+  let map;
+  let marker;
+
+  function initMap() {
+    const startLocation = { lat: 52.3702, lng: 4.8952 }; // Amsterdam
+
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: startLocation,
+      zoom: 13,
+    });
+
+    const input = document.getElementById("searchInput");
+    const autocomplete = new google.maps.places.Autocomplete(input);
+    autocomplete.bindTo("bounds", map);
+
+    autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (!place.geometry) return;
+
+      const location = place.geometry.location;
+      setMarker(location.lat(), location.lng());
+      map.panTo(location);
+      map.setZoom(16);
+    });
+
+    map.addListener("click", (e) => {
+      setMarker(e.latLng.lat(), e.latLng.lng());
+    });
+  }
+
+  function setMarker(lat, lng) {
+    document.getElementById("lat").value = lat.toFixed(6);
+    document.getElementById("lng").value = lng.toFixed(6);
+
+    const position = { lat, lng };
+
+    if (!marker) {
+      marker = new google.maps.Marker({
+        position,
+        map,
+      });
+    } else {
+      marker.setPosition(position);
+    }
+  }
+
+  function copyToClipboard(id) {
+    const input = document.getElementById(id);
+    input.select();
+    input.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    alert(`Gekopieerd: ${input.value}`);
+  }
+</script>
+
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuvZr3pWBeoo_FnVL2BmbpAMiDMaC0Ha8&libraries=places&callback=initMap"
+  async
+  defer
+></script>
+
+</body>
+</html>
